@@ -11,7 +11,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -27,9 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.gamecatalogue.ui.viewmodels.GamesViewModel
 import com.example.gamecatalogue.ui.views.components.GameCard
+import com.example.gamecatalogue.ui.views.components.GameList
 import com.example.gamecatalogue.ui.views.components.MainTopBar
 
 @Composable
@@ -67,10 +72,8 @@ fun HomeViewContent(
     paddingValues: PaddingValues
 ) {
     var query by gamesViewModel.query
-    val isLoading by gamesViewModel.isLoading
-    val games = if(query.isEmpty())
-        gamesViewModel.gamesPage.collectAsLazyPagingItems() else
-            gamesViewModel.searchGamesPage.collectAsLazyPagingItems()
+    val games = gamesViewModel.allGamesPage.collectAsLazyPagingItems()
+    val searchGames = gamesViewModel.searchGamesPage.collectAsLazyPagingItems()
 
     Column(
         modifier = Modifier
@@ -83,28 +86,29 @@ fun HomeViewContent(
             singleLine = true,
             onValueChange = {
                 query = it
-                if(it.isNotEmpty()) {
-                    gamesViewModel.refreshSearchList()
+
+                if(query.isNotEmpty()) {
+                    searchGames.refresh()
                 }
             },
             label = { Text(text = "Search game") },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 10.dp),
-            shape = RoundedCornerShape(5.dp)
+                .padding(10.dp),
         )
-        if(isLoading) {
-            CircularProgressIndicator()
+
+        if(query.isNotEmpty()) {
+            GameList(
+                games = searchGames,
+                navController = navController,
+            )
         } else {
-            LazyColumn {
-                items(games.itemCount) {
-                    val item = games[it]
-                    if (item != null)
-                        GameCard(game = item) {
-                            navController.navigate("detail_view/${item.id}")
-                        }
-                }
-            }
+            GameList(
+                games = games,
+                navController = navController,
+            )
         }
     }
 }
+
+

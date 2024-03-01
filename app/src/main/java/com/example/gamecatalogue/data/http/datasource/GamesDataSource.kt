@@ -1,5 +1,6 @@
 package com.example.gamecatalogue.data.http.datasource
 
+import androidx.compose.runtime.MutableState
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.example.gamecatalogue.domain.models.Game
@@ -7,7 +8,7 @@ import com.example.gamecatalogue.domain.repositories.GameRepository
 import javax.inject.Inject
 
 class GamesDataSource @Inject constructor(
-    private val gamesRepository: GameRepository
+    private val gamesRepository: GameRepository,
 ): PagingSource<Int, Game>() {
     override fun getRefreshKey(state: PagingState<Int, Game>): Int? {
         return state.anchorPosition?.let {

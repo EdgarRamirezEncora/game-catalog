@@ -41,9 +41,10 @@ fun DetailView(
         gamesViewModel.getGameById(gameId)
     }
 
-    BackHandler {
-        gamesViewModel.cleanState()
-        navController.popBackStack()
+    DisposableEffect(Unit) {
+        onDispose {
+            gamesViewModel.cleanState()
+        }
     }
 
     Scaffold(
@@ -73,7 +74,7 @@ fun DetailViewContent(
     paddingValues: PaddingValues
 ) {
     val state = gamesViewModel.state
-    val isLoading by gamesViewModel.isLoading
+    val isLoading by gamesViewModel.isLoadingSingleGame
 
     Column(
         modifier = Modifier

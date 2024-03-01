@@ -4,10 +4,13 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -16,6 +19,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,10 +35,16 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
 import coil.compose.rememberImagePainter
+import com.example.gamecatalogue.R
 import com.example.gamecatalogue.domain.models.Game
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +56,7 @@ fun MainTopBar(
     showActions: Boolean = false,
     onClickActionsButton: () -> Unit
 ) {
-    TopAppBar(
+    CenterAlignedTopAppBar(
         title = {
             Text(
                 text = title,
@@ -109,10 +120,11 @@ fun GameCard(
 
 @Composable
 fun ImageContainer(imageUrl: String) {
-    val image = rememberImagePainter(data = imageUrl)
+
+    val image = rememberImagePainter(data = imageUrl ?: "")
     
     Image(
-        painter = image, 
+        painter = image,
         contentDescription = 
         null, 
         contentScale = ContentScale.Crop,
@@ -129,7 +141,7 @@ fun MetaWebsite(url: String) {
 
     Column {
         Text(
-            text = "Metascore",
+            text = "MetaScore",
             fontWeight = FontWeight.Bold,
             fontSize = 30.sp,
             modifier = Modifier
@@ -170,6 +182,50 @@ fun ReviewCard(metaScore: Int) {
                 fontSize = 50.sp,
                 fontWeight = FontWeight.ExtraBold
             )
+        }
+    }
+}
+
+@Composable
+fun GameList(
+    games: LazyPagingItems<Game>,
+    navController: NavController,
+) {
+
+    when(games.loadState.append) {
+        is LoadState.NotLoading -> {
+            if(games.itemCount > 0) {
+                LazyColumn {
+                    items(games.itemCount) {
+                        val item = games[it]
+                        if (item != null)
+                            GameCard(game = item) {
+                                navController.navigate("detail_view/${item.id}")
+                            }
+                    }
+                }
+            } else {
+                Text(text = "No results.")
+            }
+        }
+
+        is LoadState.Loading -> {
+            CircularProgressIndicator()
+        }
+
+        is LoadState.Error -> {
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = "Something went wrong")
+                Button(
+                    onClick = { games.refresh() },
+                    modifier = Modifier.padding(top = 10.dp)
+                ) {
+                    Text(text = "Try again")
+                }
+            }
         }
     }
 }
