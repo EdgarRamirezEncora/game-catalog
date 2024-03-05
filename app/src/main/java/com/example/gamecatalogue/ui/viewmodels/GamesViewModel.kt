@@ -1,5 +1,8 @@
 package com.example.gamecatalogue.ui.viewmodels
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -7,9 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.gamecatalogue.data.http.datasource.GamesDataSource
 import com.example.gamecatalogue.data.http.datasource.SearchGamesDataSource
 import com.example.gamecatalogue.domain.models.Game
@@ -18,12 +19,11 @@ import com.example.gamecatalogue.ui.viewmodels.states.GameState
 import com.example.gamecatalogue.util.Constants
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
 
 @HiltViewModel
 class GamesViewModel @Inject constructor(
@@ -43,6 +43,9 @@ class GamesViewModel @Inject constructor(
 
     private val _isLoadingSingleGame = mutableStateOf(true)
     val isLoadingSingleGame = _isLoadingSingleGame
+
+    private val _isNetworkAvailable = mutableStateOf(false)
+    val isNetworkAvailable = _isNetworkAvailable
 
     var allGamesPage = Pager(PagingConfig(pageSize = Constants.PAGE_SIZE)) {
         GamesDataSource(
@@ -101,6 +104,14 @@ class GamesViewModel @Inject constructor(
                 println(e)
             }
         }
+    }
+
+    fun checkNetworkStatus(context: Context) {
+        val networkManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+        val networkCapabilities = networkManager.getNetworkCapabilities(networkManager.activeNetwork)
+        _isNetworkAvailable.value = networkCapabilities
+            ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ?: false
     }
 
     fun cleanState() {
